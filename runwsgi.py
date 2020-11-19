@@ -17,6 +17,7 @@
 import argparse
 import os.path
 import sys
+import traceback
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from wsgiref.simple_server import make_server
@@ -51,11 +52,15 @@ for module in sys.modules.values():
 class ReloadHandler(FileSystemEventHandler):
 	def on_modified(self, event):
 		print(f"# Reloading {reload_watches[event.src_path].__name__} from {event.src_path} due to modification...")
-		reload(reload_watches[event.src_path])
-
-		# reset the application, in case it was reloaded
-		application = getattr(sys.modules[application_module_name], 'application')
-		wsgi_server.set_app(application)
+		try:
+			reload(reload_watches[event.src_path])
+		except Exception as e:
+			traceback.print_exc(file=sys.stderr)
+			print(f"# Failed to reload, server continues with old code!")
+		else:
+			# reset the application, in case it was reloaded
+			application = getattr(sys.modules[application_module_name], 'application')
+			wsgi_server.set_app(application)
 
 # wire-up the reloading to the filesystem watcher
 handler = ReloadHandler()
