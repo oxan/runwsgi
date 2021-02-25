@@ -50,7 +50,7 @@ for module in sys.modules.values():
 
 # handler to reload files when they are changed
 class ReloadHandler(FileSystemEventHandler):
-	def on_modified(self, event):
+	def on_closed(self, event):
 		if event.src_path not in reload_watches:
 			print(f"# Ignoring change to not-loaded path {event.src_path}")
 			return
